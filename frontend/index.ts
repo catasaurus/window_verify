@@ -2,18 +2,9 @@ import { PathMe } from "./path";
 import { ZodError, z } from "zod";
 
 const windowMessage = document.getElementById("windowMessage");
-const id = Math.random().toString(36).substring(7);
-let otherWindowId: string;
-
-interface WindowEntry {
-  x: number,
-  y: number,
-  screenHeight: number,
-  screenWidth: number,
-  width: number,
-  height: number, 
-  updated: number,
-}
+// human will never open two windows at the same time
+const id = String(Date.now());
+let otherWindowId: boolean | string = false;
 
 const WindowDetails = z.object({
   x: z.number(),
@@ -21,15 +12,14 @@ const WindowDetails = z.object({
   screenHeight: z.number(),
   screenWidth: z.number(),
   width: z.number(),
-  height: z.number(), 
-  id: z.string(),
+  height: z.number(),  
   updated: z.number(),
 });
 type WindowDetails = z.infer<typeof WindowDetails>;
 
 setInterval(() => {
-  console.log("interval runnign")
-  const windowEntry: WindowEntry = {
+  // console.log("test")
+  const windowEntry: WindowDetails = {
     x: window.screenX,
     y: window.screenY,
     screenWidth: window.screen.availWidth,
@@ -42,20 +32,23 @@ setInterval(() => {
 
   const storage = Object.entries(window.localStorage);
   for (const entry of storage) {
+    
     if (entry[0] != id && (!otherWindowId || entry[0] == otherWindowId)) {
-      try {
-        const otherWindow: WindowDetails = WindowDetails.parse(entry);
+      try { 
+        const otherWindow: WindowDetails = WindowDetails.parse(JSON.parse(entry[1]));
         if (!otherWindowId) {
           otherWindowId = entry[0];
         }
       }
-      catch (ZodError) {
-        continue
+      catch (error) {
+        console.log(error)
       }
     } 
   }
  
   if (otherWindowId) {
-    windowMessage!.innerText = "bob";
+    windowMessage!.innerText = "";
   }
+
+  
 }, 500);
